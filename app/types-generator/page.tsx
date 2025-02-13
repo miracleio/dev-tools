@@ -1,4 +1,10 @@
 import TypesGeneratorForm from "@/components/TypesGenerator/Form";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Types Generator",
+  description: "Generate TypeScript types from JSON data.",
+};
 
 export default function TypesGeneratorPage() {
   return (
