@@ -8,12 +8,21 @@ import { useTypeGenerator } from "@/hooks/useTypeGenerator";
 const TypesGeneratorForm = () => {
   const { loading, generatedTypes, error, generateTypes } = useTypeGenerator();
 
-  const preprocessToJson = (input: string): string => {
-    return input
-      .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?:/g, '"$2":') // Wrap unquoted keys in double quotes
-      .replace(/'/g, '"') // Replace single quotes with double quotes
-      .replace(/,\s*}/g, "}") // Remove trailing commas before closing object
-      .replace(/,\s*]/g, "]"); // Remove trailing commas before closing array
+  const preprocessToJson = (input: string) => {
+    try {
+      // Attempt to parse the input as JSON
+      JSON.parse(input);
+      // If parsing succeeds, return the input as it's already valid JSON
+      return input;
+    } catch (e) {
+      console.log("Parsing failed, proceeding with preprocessing", e);
+      // If parsing fails, proceed with preprocessing
+      return input
+        .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?:/g, '"$2":') // Wrap unquoted keys in double quotes
+        .replace(/'/g, '"') // Replace single quotes with double quotes
+        .replace(/,\s*}/g, "}") // Remove trailing commas before closing object
+        .replace(/,\s*]/g, "]"); // Remove trailing commas before closing array
+    }
   };
 
   const formik = useFormik({
@@ -27,6 +36,8 @@ const TypesGeneratorForm = () => {
       console.log(values.data);
 
       const cleanedJson = preprocessToJson(values.data);
+      console.log({ cleanedJson });
+
       const parsedData = JSON.parse(cleanedJson); // Convert to valid JSON
       console.log(parsedData); // You can pass this to generateTypeScriptTypes
       generateTypes(parsedData, false); // Change to true if you want to use `type` instead of `interface`
