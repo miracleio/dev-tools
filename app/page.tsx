@@ -9,6 +9,12 @@ const pages = [
     emoji: "🧬",
     description: "Generate TypeScript types from JSON data.",
   },
+  {
+    title: "Slug Generator",
+    href: "/slug-generator",
+    emoji: "🔗",
+    description: "Generate URL-friendly slugs from text.",
+  },
 ];
 
 export default function Home() {
