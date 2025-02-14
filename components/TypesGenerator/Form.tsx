@@ -75,7 +75,7 @@ const TypesGeneratorForm = () => {
 
       {/* Display Generated Types */}
       {generatedTypes && (
-        <div className="generated-code mt-4 p-4 bg-gray-100 border rounded">
+        <div className="card mt-8">
           <h3 className="font-bold">Generated TypeScript:</h3>
           <pre className="whitespace-pre-wrap text-sm">{generatedTypes}</pre>
         </div>
