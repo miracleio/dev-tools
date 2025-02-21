@@ -187,7 +187,72 @@ const ApiKeysCalculatorForm = () => {
                 exceeding rate limits.
               </small>
             </li>
+            <li className="text-sm text-gray-700 dark:text-gray-300 flex flex-col gap-1">
+              <strong className="text-gray-900 dark:text-gray-100">
+                API Key Rotation Interval:
+              </strong>
+              <span className="text-blue-600 dark:text-blue-400 font-semibold">
+                {result.apiKeyRotationInterval?.toFixed(2)} days
+              </span>
+              <small className="text-gray-500 dark:text-gray-400">
+                Rotate API keys approximately every{" "}
+                {result.apiKeyRotationInterval?.toFixed(2)} days to maintain
+                continuous operation.
+              </small>
+            </li>
           </ul>
+
+          <h4 className="font-semibold mt-4 text-gray-800 dark:text-gray-200">
+            Example API Key Rotation Script:
+          </h4>
+          <pre className="bg-gray-100 dark:bg-gray-800 p-3 rounded text-xs text-gray-700 dark:text-gray-300 overflow-x-auto">
+            <code>
+              {`
+const fs = require("fs");
+const path = require("path");
+
+// Load API keys from environment variables
+const apiKeys = [
+  ${Array.from(
+    { length: formik.values.availableKeys || result.requiredKeys },
+    (_, i) => `process.env.API_KEY_${i + 1}`
+  ).join(",\n  ")}
+].filter(Boolean);
+
+const statePath = path.join(__dirname, "state.json");
+
+// Load or initialize state
+let state = { lastRotation: 0, currentIndex: 0 };
+if (fs.existsSync(statePath)) {
+  state = JSON.parse(fs.readFileSync(statePath, "utf8"));
+}
+
+const now = Date.now();
+const rotationInterval = ${
+                result.apiKeyRotationInterval
+              } * 24 * 60 * 60 * 1000; // Convert days to milliseconds
+
+if (now - state.lastRotation >= rotationInterval) {
+  state.currentIndex = (state.currentIndex + 1) % apiKeys.length;
+  state.lastRotation = now;
+  fs.writeFileSync(statePath, JSON.stringify(state, null, 2));
+  console.log("🔄 API keys rotated!");
+}
+
+// Cron Job for automatic rotation
+const cron = require("node-cron");
+cron.schedule("0 0 * * *", () => {
+  const now = Date.now();
+  if (now - state.lastRotation >= rotationInterval) {
+    state.currentIndex = (state.currentIndex + 1) % apiKeys.length;
+    state.lastRotation = now;
+    fs.writeFileSync(statePath, JSON.stringify(state, null, 2));
+    console.log("🔄 API keys rotated automatically!");
+  }
+});
+        `}
+            </code>
+          </pre>
         </div>
       )}
     </div>

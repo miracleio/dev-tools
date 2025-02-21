@@ -10,10 +10,11 @@ export type ApiKeysCalculatorInput = {
 };
 
 export type ApiKeysCalculatorOutput = {
-  requiredKeys: number; // Number of API keys needed for continuous operation
+  requiredKeys: number; // Number of API keys needed
   daysBeforeLimit: number; // How many days 1 API key will last
   newInterval?: number; // New interval if availableKeys is provided
-  calculatedRequestsPerOperation?: number; // If derived from `limitReachedInDays`
+  calculatedRequestsPerOperation?: number;
+  apiKeyRotationInterval?: number; // How often to rotate API keys (in days)
 };
 
 function apiKeysCalculator(
@@ -27,12 +28,11 @@ function apiKeysCalculator(
     limitReachedInDays,
     knownInterval,
   } = input;
-  const minutesInAMonth = 30 * 24 * 60; // Assuming 30 days in a month
+  const minutesInAMonth = 30 * 24 * 60;
 
   let calculatedRequestsPerOperation = requestsPerOperation;
 
   if (!requestsPerOperation && limitReachedInDays && knownInterval) {
-    // Derive requests per operation
     const totalRequestsPerKey = requestsPerMonth / limitReachedInDays;
     const operationsPerDay = (24 * 60) / knownInterval;
     calculatedRequestsPerOperation = totalRequestsPerKey / operationsPerDay;
@@ -44,62 +44,38 @@ function apiKeysCalculator(
     );
   }
 
-  // Calculate operations per day
   const operationsPerDay = (24 * 60) / operationInterval;
-
-  // Total requests used per day
   const dailyRequestUsage = operationsPerDay * calculatedRequestsPerOperation;
-
-  // Days before a single API key reaches its limit
   const daysBeforeLimit = Math.floor(requestsPerMonth / dailyRequestUsage);
-
-  // Total operations per month
   const totalOperationsPerMonth = minutesInAMonth / operationInterval;
-
-  // Total requests needed per month
   const totalRequestsNeeded =
     totalOperationsPerMonth * calculatedRequestsPerOperation;
-
-  // Number of API keys required
   const requiredKeys = Math.ceil(totalRequestsNeeded / requestsPerMonth);
 
+  // Ensure rotation makes all keys last a full month
+  const apiKeyRotationInterval = availableKeys
+    ? 30 / availableKeys // Rotate every X days to ensure full-month coverage
+    : daysBeforeLimit / requiredKeys;
+
   if (availableKeys) {
-    // If user provides available API keys, calculate the new possible interval
     const maxOperations =
       (availableKeys * requestsPerMonth) / calculatedRequestsPerOperation;
     const newInterval = minutesInAMonth / maxOperations;
     return {
       requiredKeys,
       daysBeforeLimit,
-      newInterval: Math.ceil(newInterval), // Rounds to nearest whole minute
+      newInterval: Math.ceil(newInterval),
       calculatedRequestsPerOperation,
+      apiKeyRotationInterval,
     };
   }
 
-  return { requiredKeys, daysBeforeLimit, calculatedRequestsPerOperation };
+  return {
+    requiredKeys,
+    daysBeforeLimit,
+    calculatedRequestsPerOperation,
+    apiKeyRotationInterval,
+  };
 }
-
-// // Example Usage:
-
-// // Scenario 1: User knows `requestsPerOperation`
-// console.log(
-//   apiKeysCalculator({
-//     requestsPerMonth: 100000,
-//     requestsPerOperation: 5,
-//     operationInterval: 10,
-//     availableKeys: 3,
-//   })
-// );
-
-// // Scenario 2: User does not know `requestsPerOperation`, but knows API key lasted `15 days` at a `20-minute` interval
-// console.log(
-//   apiKeysCalculator({
-//     requestsPerMonth: 100000,
-//     operationInterval: 10,
-//     limitReachedInDays: 15,
-//     knownInterval: 20,
-//     availableKeys: 3,
-//   })
-// );
 
 export default apiKeysCalculator;
