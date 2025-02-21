@@ -153,6 +153,10 @@
     @apply text-xs text-red-600 dark:text-red-300;
   }
 
+  .form-info {
+    @apply flex gap-1 items-center text-sm text-gray-400 dark:text-gray-500;
+  }
+
   .divider {
     @apply h-4 w-0.5 rounded-full bg-gray-200 dark:bg-gray-700;
   }
