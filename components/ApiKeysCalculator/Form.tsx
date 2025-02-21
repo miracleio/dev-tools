@@ -43,26 +43,74 @@ const ApiKeysCalculatorForm = () => {
       info: "Max requests per API key per month",
     },
     {
+      name: "requestsPerOperation",
+      label: "Requests Per Operation (optional)",
+      placeholder: "e.g., 5",
+      info: "Optional: If unknown, this will be calculated based on knownInterval and limitReachedInDays",
+    },
+    {
       name: "availableKeys",
       label: "Available Keys (e.g., 12)",
       placeholder: "e.g., 12",
       info: "Optional: Number of API keys available",
     },
   ];
+
   const formik = useFormik<ApiKeysCalculatorInput>({
     initialValues: {
       knownInterval: 20,
       limitReachedInDays: 9,
       operationInterval: 20,
       requestsPerMonth: 10_000,
+      requestsPerOperation: undefined,
       availableKeys: 12,
     },
-    validationSchema: Yup.object({
-      knownInterval: Yup.number().required(),
-      limitReachedInDays: Yup.number().required(),
-      operationInterval: Yup.number().required(),
-      requestsPerMonth: Yup.number().required(),
-      availableKeys: Yup.number(),
+    validationSchema: Yup.object().shape({
+      requestsPerMonth: Yup.number()
+        .required("Requests per month is required")
+        .positive("Must be a positive number"),
+
+      operationInterval: Yup.number()
+        .required("Operation interval is required")
+        .positive("Must be a positive number"),
+
+      availableKeys: Yup.number().nullable().min(0, "Cannot be negative"),
+
+      requestsPerOperation: Yup.number()
+        .nullable()
+        .positive("Must be a positive number")
+        .test(
+          "requestsPerOperation-required",
+          "Requests per operation is required if known interval and limit reached in days are missing",
+          function (value) {
+            const { knownInterval, limitReachedInDays } = this.parent;
+            return !!value || (knownInterval && limitReachedInDays);
+          }
+        ),
+
+      knownInterval: Yup.number()
+        .nullable()
+        .positive("Must be a positive number")
+        .test(
+          "knownInterval-required",
+          "Known interval is required if requests per operation is missing",
+          function (value) {
+            const { requestsPerOperation, limitReachedInDays } = this.parent;
+            return !!value || !!requestsPerOperation || !limitReachedInDays;
+          }
+        ),
+
+      limitReachedInDays: Yup.number()
+        .nullable()
+        .positive("Must be a positive number")
+        .test(
+          "limitReachedInDays-required",
+          "Limit reached in days is required if requests per operation is missing",
+          function (value) {
+            const { requestsPerOperation, knownInterval } = this.parent;
+            return !!value || !!requestsPerOperation || !knownInterval;
+          }
+        ),
     }),
     onSubmit: (values) => {
       const result = apiKeysCalculator(values);
@@ -79,6 +127,7 @@ const ApiKeysCalculatorForm = () => {
               <label htmlFor={name}>{label}</label>
               <input
                 type="number"
+                id={name}
                 placeholder={placeholder}
                 {...formik.getFieldProps(name)}
                 className="form-input"
