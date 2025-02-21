@@ -15,6 +15,13 @@ const pages = [
     emoji: "🔗",
     description: "Generate URL-friendly slugs from text.",
   },
+  {
+    title: "API Keys Calculator",
+    href: "/api-keys-calculator",
+    emoji: "🔑",
+    description:
+      "Calculate the number of API keys needed for a given interval.",
+  },
 ];
 
 export default function Home() {
