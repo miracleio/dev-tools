@@ -22,6 +22,12 @@ const pages = [
     description:
       "Calculate the number of API keys needed for a given interval.",
   },
+  {
+    title: "Word Counter",
+    href: "/word-counter",
+    emoji: "📝",
+    description: "Count the number of words in a text.",
+  },
 ];
 
 export default function Home() {
